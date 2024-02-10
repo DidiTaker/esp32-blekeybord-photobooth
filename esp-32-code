@@ -1,0 +1,45 @@
+#define USE_NIMBLE
+#include <BleKeyboard.h>
+#include <Arduino.h>
+
+BleKeyboard bleKeyboard;
+
+#define BUTTON_I 16
+#define BUTTON_C 17
+#define BUTTON_G 18
+#define BUTTON_P 19
+
+bool keyState = false;
+unsigned long lastKeyPressTime = 100;
+const unsigned long keyPressThreshold = 500;  // Seuil pour la détection de pression longue (en millisecondes)
+uint8_t keyCode = 'i';
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("Code running...");
+  pinMode(BUTTON_I, INPUT_PULLUP);
+  bleKeyboard.begin();
+}
+
+void loop() {
+  unsigned long currentTime = millis();
+  if (digitalRead(BUTTON_I) == LOW) {
+    // Button pressed
+    if (!keyState) {
+      // Key not currently pressed
+      keyState = true;
+      lastKeyPressTime = currentTime; // enregistre le temps de l'appui
+    }
+  } else {
+    // Button not pressed
+    if (keyState) {
+      // Key currently pressed
+      keyState = false;
+      if ((currentTime - lastKeyPressTime) < keyPressThreshold) {
+        // Send key only if the key was pressed for a short duration
+        bleKeyboard.press(keyCode);
+        bleKeyboard.release(keyCode);
+      }
+    }
+  }
+}
